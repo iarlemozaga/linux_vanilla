@@ -24,8 +24,8 @@ make defconfig
 # Exemplo: habilitar suporte a drivers específicos, sistemas de arquivos, etc.
 # make menuconfig
 
-# Compile o kernel
-make -j$(nproc)
+# Compile o kernel utilizando o máximo de threads e cores disponíveis
+make -j$(nproc --all)
 
 # Instale os módulos do kernel
 make modules_install
