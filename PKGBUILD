@@ -1,22 +1,11 @@
 #!/bin/bash
 
-# Verifique se o curl está instalado
-if ! command -v curl &> /dev/null; then
-    echo "O curl não está instalado. Instale-o antes de executar este script."
-    exit 1
-fi
-
-# Instale o base-devel se não estiver instalado
-if ! pacman -Qi base-devel &> /dev/null; then
-    sudo pacman -S --noconfirm base-devel
-fi
-
-# Instale as dependências necessárias para o menuconfig
-sudo pacman -S --noconfirm ncurses
+# Defina sua senha de sudo
+SUDO_PASSWORD="sua_senha_sudo"
 
 # Baixe a versão mais recente do kernel
 KERNEL_VERSION=$(curl -sL https://www.kernel.org/ | grep -oP 'stable: <strong>\K[^<]+')
-KERNEL_SOURCE_URL="https://www.kernel.org/pub/linux/kernel/v5.x/linux-$KERNEL_VERSION.tar.xz"
+KERNEL_SOURCE_URL="https://www.kernel.org/pub/linux/kernel/v6.x/linux-$KERNEL_VERSION.tar.xz"
 
 # Baixe e extraia o código-fonte do kernel
 curl -O $KERNEL_SOURCE_URL
@@ -33,10 +22,10 @@ make menuconfig
 make -j$(nproc --all)
 
 # Instale os módulos do kernel
-sudo make modules_install
+echo "$SUDO_PASSWORD" | sudo -S make modules_install
 
 # Instale o kernel
-sudo make install
+echo "$SUDO_PASSWORD" | sudo -S make install
 
 # Crie um pacote usando o PKGBUILD
 cd /usr/src/linux-$KERNEL_VERSION
@@ -48,7 +37,7 @@ pkgrel=1
 arch=('x86_64')
 url='https://www.kernel.org/'
 license=('GPL')
-source=("https://www.kernel.org/pub/linux/kernel/v6.x/linux-$KERNEL_VERSION.tar.xz")
+source=("https://www.kernel.org/pub/linux/kernel/v5.x/linux-$KERNEL_VERSION.tar.xz")
 sha256sums=('SKIP')
 
 build() {
@@ -70,8 +59,8 @@ package() {
 EOL
 
 # Compile e instale o pacote
-makepkg -si
+echo "$SUDO_PASSWORD" | sudo -S makepkg -si
 
 # Limpeza
 cd ..
-rm -rf "linux-$KERNEL_VERSION" "linux-$KERNEL_VERSION.tar.xz"
+sudo rm -rf "linux-$KERNEL_VERSION" "linux-$KERNEL_VERSION.tar.xz"
